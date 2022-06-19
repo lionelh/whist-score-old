@@ -1,0 +1,100 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Gestion des scores par contrats</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card text-white border-primary">
+                <div class="card-header bg-primary">Liste des résultats par contrat</div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-bordered table-stripped">
+                            <tr class="bg-primary text-white">
+                                <th>Nom du l'annonce</th>
+                                <th>Nom du résultat de la donne</th>
+                                <th>Rôles & scores des participants à la donne</th>
+                            </tr>
+                            <tr *ngIf="(results$ | async)?.length == 0">
+                                <td [attr.colspan]="4">Aucune résultats trouvé dans la base données !</td>
+                            </tr>
+                            <tr *ngFor="let r of results$ | async; index as i" [class.bg-info]="i % 2 == 0">
+                                <td>{{ r.contract?.name }}</td>
+                                <td>{{ r.name }}</td>
+                                <td>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th nowrap class="bg-warning" *ngFor="let rs of r.roleScores">{{ rs.roleName }}</th>
+                                        </tr>
+                                        <tr [class.bg-light]="i % 2 == 0">
+                                            <td *ngFor="let rs of r.roleScores">
+                                                <div *ngIf="rs.score >= 0">+{{ rs.score }}</div>
+                                                <div *ngIf="rs.score < 0">{{ rs.score }}</div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-white border-primary">
+                <div class="card-header bg-primary">Création d'un résultat pour un contrat</div>
+                <div class="card-body text-black">
+                    <div class="card-text">
+                        <form [formGroup]="creationForm" (ngSubmit)="onSubmit()">
+                            <div class="form-group required" [class.has-danger]="name?.invalid && (name?.dirty || name?.touched)">
+                                <label for="name" class="control-label">Nom du résultat de la donne</label>
+                                <input id="name"
+                                       type="text"
+                                       formControlName="name"
+                                       class="form-control"
+                                       [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)"
+                                       [class.is-valid]="name?.valid && (name?.dirty || name?.touched)"
+                                />
+                                <!--div class="form-helper"></div-->
+                                <div class="text-warning" *ngIf="(name?.dirty || name?.touched) && name?.status === 'PENDING'">
+                                    Validation en cours...
+                                </div>
+                                <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="invalid-feedback">
+                                    <div *ngIf="name?.errors?.['required']">Le nom est obligatoire.</div>
+                                    <div *ngIf="name?.errors?.['minlength']">Le nom doit contenir au moins 2 caractères.</div>
+                                    <div *ngIf="name?.errors?.['maxlength']">Le nom doit comporter maximum 150 caractères.</div>
+                                    <div *ngIf="name?.errors?.['uniquePlayerName']">Le nom du rôle existe déjà.</div>
+                                </div>
+                            </div>
+                            <div class="form-group required" [class.has-danger]="contract?.invalid && (contract?.dirty || contract?.touched)">
+                                <label for="contract" class="control-label">Nom de l'annonce de la donne</label>
+                                <select class="form-select"
+                                        id="contract"
+                                        formControlName="contract"
+                                        [class.is-invalid]="contract?.invalid && (contract?.dirty || contract?.touched)"
+                                        [class.is-valid]="contract?.valid && (contract?.dirty || contract?.touched)"
+                                        (change)="onContractChange()">
+                                    <option *ngFor="let c of contracts" value="{{ c.id }}">{{ c.name }} ({{ c.numberOfPlayers }} joueurs)</option>
+                                </select>
+                            </div>
+                            <div class="form-group required" *ngFor="let role of roleScoresArray">
+                                <label for="{{role}}" class="control-label">{{ role }}</label>
+                                <input id="{{role}}"
+                                       type="number"
+                                       formControlName="{{role}}"
+                                       class="form-control"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <button class="btn btn-primary" type="submit" [disabled]="!creationForm?.valid">Enregistrer</button>
+                                </fieldset>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

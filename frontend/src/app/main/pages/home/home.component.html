@@ -1,0 +1,98 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Bienvenue !</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card text-white border-primary">
+                <div class="card-header bg-primary">Historique des parties</div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-bordered">
+                            <tr class="bg-primary text-white">
+                                <th>Date de la partie</th>
+                                <th>Lieu de la partie</th>
+                                <th>Status de la partie</th>
+                                <th>Joeurs participants</th>
+                                <th>&nbsp;</th>
+                            </tr>
+                            <tr *ngIf="(events$ | async)?.length == 0">
+                                <td [attr.colspan]="5">Aucune partie trouvée !</td>
+                            </tr>
+                            <tr *ngFor="let e of events$ | async">
+                                <td>{{ e.eventDate | date: 'dd MMMM YYYY' }}</td>
+                                <td>{{ e.place }}</td>
+                                <td>
+                                    <span *ngIf="e.status == 'NEW'" class="badge rounded-pill bg-danger">Nouvelle</span>
+                                    <span *ngIf="e.status == 'IN_PROGRESS'" class="badge rounded-pill bg-warning">En cours</span>
+                                    <span *ngIf="e.status == 'FINISHED'" class="badge rounded-pill bg-success">Terminée</span>
+                                </td>
+                                <td>
+                                    <ul class="list-group">
+                                        <li class="list-group-item" [class.bg-warning]="j % 2 == 0" *ngFor="let p of e.players;index as j">{{ p.name }}</li>
+                                    </ul>
+                                </td>
+                                <td class="text-black">
+                                    <a [routerLink]="['/games', e.id]" title="Voir les détails de la partie" class="btn btn-success bg-success">
+                                        <i class="bi-search"></i>
+                                    </a>
+                                    &nbsp;
+                                    <a (click)="closeEvent(e?.id)" title="Clôturer la partie" *ngIf="e?.status == 'IN_PROGRESS'" class="btn btn-danger bg-danger">
+                                        <i class="bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-white border-primary">
+                <div class="card-header bg-primary">Création d'une partie</div>
+                <div class="card-body text-black">
+                    <div class="card-text">
+                        <form [formGroup]="creationForm" (ngSubmit)="onSubmit()">
+                            <div class="form-group required" [class.has-danger]="place?.invalid && (place?.dirty || place?.touched)">
+                                <label for="place" class="control-label">Lieu de la partie</label>
+                                <input id="place"
+                                       type="text"
+                                       formControlName="place"
+                                       class="form-control"
+                                       [class.is-invalid]="place?.invalid && (place?.dirty || place?.touched)"
+                                       [class.is-valid]="place?.valid && (place?.dirty || place?.touched)"
+                                />
+                                <div class="form-helper"></div>
+                                <div class="text-warning" *ngIf="(place?.dirty || place?.touched) && place?.status === 'PENDING'">
+                                    Validation en cours...
+                                </div>
+                                <div *ngIf="place?.invalid && (place?.dirty || place?.touched)" class="invalid-feedback">
+                                    <div *ngIf="place?.errors?.['required']">Le lieu est obligatoire.</div>
+                                    <div *ngIf="place?.errors?.['minlength']">Le lieu doit contenir au moins 2 caractères.</div>
+                                    <div *ngIf="place?.errors?.['maxlength']">Le lieu doit comporter maximum 150 caractères.</div>
+                                </div>
+                            </div>
+                            <div class="form-group required">
+                                <label for="roles" class="control-label">Joueurs participants à la partie</label>
+                                <div class="form-check" *ngFor="let p of dbPlayers">
+                                    <input type="checkbox" class="form-check-input" [value]="p.id" (change)="onPlayerCheckboxChange($event)">
+                                    <label class="form-check-label">{{ p.name }}</label>
+                                </div>
+                            </div>
+                            <div *ngIf="this.creationForm.controls['players'].errors?.['required']" class="invalid-feedback">
+                                La sélection des joueurs participants est obligatoire.
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <button class="btn btn-primary" type="submit" [disabled]="!creationForm?.valid">Enregistrer</button>
+                                </fieldset>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

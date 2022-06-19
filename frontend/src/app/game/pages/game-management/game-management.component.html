@@ -1,0 +1,104 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>
+                Partie n°{{ id }} du {{ event?.eventDate| date: 'dd MMMM YYYY' }}
+                <span *ngIf="event?.status == 'NEW'" class="badge rounded-pill bg-danger">Nouvelle</span>
+                <span *ngIf="event?.status == 'IN_PROGRESS'" class="badge rounded-pill bg-warning">En cours</span>
+                <span *ngIf="event?.status == 'FINISHED'" class="badge rounded-pill bg-success">Terminée</span>
+            </h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    Scores de la partie
+                    <button class="btn btn-danger" title="Clôturer la partie" (click)="closeEvent(event?.id)" *ngIf="event?.status == 'IN_PROGRESS'">
+                        <i class="bi-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <table class="table table-bordered border-primary">
+                            <tr class="bg-primary text-white">
+                                <th>Annonce</th>
+                                <th>Résultat</th>
+                                <th *ngFor="let p of event?.players">{{ p.name }}</th>
+                            </tr>
+                            <tr *ngIf="(draws$ | async)?.length == 0">
+                                <td [attr.colspan]="computeColspan(event?.players?.length)">Aucune donne n'a été jouée !</td>
+                            </tr>
+                            <tr *ngFor="let d of (draws$ |async)">
+                                <td>{{ d.contract?.name }}</td>
+                                <td>{{ d.result?.name }}</td>
+                                <td *ngFor="let pd of d.players" nowrap>
+                                    <span [class.text-danger]="pd.eventScore < 0"
+                                          [class.text-success]="pd.eventScore > 0"
+                                          [class.text-warning]="pd.eventScore == 0">
+                                        <span *ngIf="pd.eventScore > 0">+{{ pd?.eventScore }}</span>
+                                        <span *ngIf="pd.eventScore <= 0">{{ pd?.eventScore }}</span>
+                                    </span>
+                                    &nbsp;
+                                    <span *ngIf="pd.roleName != 'Mort' && pd.drawScore > 0" [class.role-annonceur]="pd.roleName.toLowerCase().startsWith('annonceur')">(+{{ pd.drawScore }})</span>
+                                    <span *ngIf="pd.roleName != 'Mort' && pd.drawScore &lt;= 0" [class.role-annonceur]="pd.roleName.toLowerCase().startsWith('annonceur')">({{ pd.drawScore }})</span>
+                                    <span *ngIf="pd.roleName == 'Mort'">(-)</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col" *ngIf="event?.status != 'FINISHED'">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">Création d'une donne</div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <form [formGroup]="creationForm" (ngSubmit)="onSubmit()">
+                            <div class="form-group required" [class.has-danger]="contract?.invalid && (contract?.dirty || contract?.touched)">
+                                <label for="contract" class="control-label">Nom de l'annonce de la donne</label>
+                                <select class="form-select"
+                                        id="contract"
+                                        formControlName="contract"
+                                        [class.is-invalid]="contract?.invalid && (contract?.dirty || contract?.touched)"
+                                        [class.is-valid]="contract?.valid && (contract?.dirty || contract?.touched)"
+                                        (change)="onContractChange()">
+                                    <option *ngFor="let c of contracts" value="{{ c.id }}">{{ c.name }}</option>
+                                </select>
+                            </div>
+                            <div class="bordered-fields" *ngIf="oldContractValue != -1">
+                                <div class="title-fields">Rôles des joueurs particiants à la donne:</div>
+                                <div class="form-group required" *ngFor="let p of playerRoleArray" [class.has-danger]="this.creationForm.get(p)?.invalid && (this.creationForm.get(p)?.dirty || this.creationForm.get(p)?.touched)">
+                                    <label for="{{ p }}" class="control-label">{{ p }}</label>
+                                    <select class="form-select"
+                                            id="{{ p }}"
+                                            [class.is-invalid]="this.creationForm.get(p)?.invalid && (this.creationForm.get(p)?.dirty || this.creationForm.get(p)?.touched)"
+                                            [class.is-valid]="this.creationForm.get(p)?.valid && (this.creationForm.get(p)?.dirty || this.creationForm.get(p)?.touched)"
+                                            formControlName="{{ p }}">
+                                        <option *ngFor="let r of roles" value="{{ r.name }}">{{ r.name }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group required" [class.has-danger]="result?.invalid && (result?.dirty || result?.touched)" *ngIf="oldContractValue != -1">
+                                <label for="result" class="control-label">Résultat de la donne</label>
+                                <select class="form-select"
+                                        id="result"
+                                        formControlName="result"
+                                        [class.is-invalid]="result?.invalid && (result?.dirty || result?.touched)"
+                                        [class.is-valid]="result?.valid && (result?.dirty || result?.touched)">
+                                    <option *ngFor="let r of results" value="{{ r.id }}">{{ r.name }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <button class="btn btn-primary" type="submit" [disabled]="!creationForm?.valid">Enregistrer</button>
+                                </fieldset>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
